@@ -9,12 +9,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import pl.wsb.fitnesstracker.event.Event;
+import pl.wsb.fitnesstracker.event.EventRepository;
 import pl.wsb.fitnesstracker.training.api.Training;
 import pl.wsb.fitnesstracker.training.internal.ActivityType;
 import pl.wsb.fitnesstracker.user.api.User;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +39,8 @@ class InitialDataLoader {
 
     private final JpaRepository<Training, Long> trainingRepository;
 
+    private final EventRepository eventRepository;
+
     @EventListener
     @Transactional
     @SuppressWarnings({"squid:S1854", "squid:S1481", "squid:S1192", "unused"})
@@ -46,7 +51,12 @@ class InitialDataLoader {
 
         List<User> sampleUserList = generateSampleUsers();
         List<Training> sampleTrainingList = generateTrainingData(sampleUserList);
+        List<Event> sampleEventList = generateEvents();
 
+        // Test JPQL: findUpcoming
+        List<Event> upcoming = eventRepository.findUpcoming(LocalDateTime.now());
+        log.info("Nadchodzące eventy: {}", upcoming.size());
+        upcoming.forEach(e -> log.info(" - {} @ {}", e.getName(), e.getStartDate()));
 
         log.info("Finished loading initial data");
     }
@@ -160,6 +170,18 @@ class InitialDataLoader {
         }
 
         return trainingData;
+    }
+
+    private List<Event> generateEvents() {
+        List<Event> events = new ArrayList<>();
+
+        events.add(new Event("Maraton Wrocław", LocalDateTime.now().plusDays(30), "Wrocław"));
+        events.add(new Event("Bieg Sylwestrowy", LocalDateTime.now().plusDays(60), "Warszawa"));
+        events.add(new Event("Triathlon Gdynia", LocalDateTime.now().plusDays(90), "Gdynia"));
+        events.add(new Event("Stary maraton (przeszły)", LocalDateTime.now().minusDays(10), "Poznań"));
+        events.add(new Event("Bieg z 2020 roku", LocalDateTime.now().minusYears(5), "Kraków"));
+
+        return eventRepository.saveAll(events);
     }
 
     private void verifyDependenciesAutowired() {
