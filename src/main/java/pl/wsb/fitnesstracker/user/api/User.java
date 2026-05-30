@@ -44,4 +44,11 @@ public class User {
         this.email = email;
     }
 
+    public void update(String firstName, String lastName, LocalDate birthdate, String email) {
+        if (firstName != null) this.firstName = firstName;
+        if (lastName != null) this.lastName = lastName;
+        if (birthdate != null) this.birthdate = birthdate;
+        if (email != null) this.email = email;
+    }
+
 }

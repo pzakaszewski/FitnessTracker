@@ -3,10 +3,9 @@ package pl.wsb.fitnesstracker.user.internal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import pl.wsb.fitnesstracker.user.api.User;
-import pl.wsb.fitnesstracker.user.api.UserProvider;
-import pl.wsb.fitnesstracker.user.api.UserService;
+import pl.wsb.fitnesstracker.user.api.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +26,39 @@ class UserServiceImpl implements UserService, UserProvider {
     }
 
     @Override
+    public void deleteUser(Long userId) {
+        log.info("Deleting User with ID {}", userId);
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
+        userRepository.deleteById(userId);
+    }
+
+    @Override
+    public User updateUser(Long userId, UserDto userDto) {
+        log.info("Updating User with ID {}", userId);
+        User existing = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        existing.update(
+                userDto.firstName(),
+                userDto.lastName(),
+                userDto.birthdate(),
+                userDto.email()
+        );
+        return userRepository.save(existing);
+    }
+
+    @Override
+    public List<User> findByEmailFragment(String emailFragment) {
+        return userRepository.findByEmailFragment(emailFragment);
+    }
+
+    @Override
+    public List<User> findUsersOlderThan(LocalDate date) {
+        return userRepository.findUsersOlderThan(date);
+    }
+
+    @Override
     public Optional<User> getUser(final Long userId) {
         return userRepository.findById(userId);
     }
@@ -40,5 +72,4 @@ class UserServiceImpl implements UserService, UserProvider {
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
-
 }
